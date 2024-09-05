@@ -3,7 +3,6 @@
 """
 
 """
-
 from myhdl import *
 
 @block
@@ -11,16 +10,15 @@ def halfAdder(a, b, soma, carry):
     @always_comb
     def comb():
         soma.next = a ^ b
-        carry.next = a and b
+        carry.next = a & b
     return instances()
 
 @block
 def fullAdder(a, b, c, soma, carry):
     s = [Signal(bool(0)) for i in range(3)]
-    haList = [None for i in range(2)]  # (1)
 
-    haList[0] = halfAdder(a, b, s[0], s[1]) 
-    haList[1] = halfAdder(c, s[0], soma, s[2])
+    half1 = halfAdder(a, b, s[0], s[1])
+    half2 = halfAdder(c, s[0], soma, s[2])
 
     @always_comb
     def comb():
@@ -29,18 +27,22 @@ def fullAdder(a, b, c, soma, carry):
     return instances()
 
 @block
-def adder2bits(x, y, soma, vaiUm):
-    c = Signal(bool(0))
-    half = halfAdder(x[0],y[0],soma[0],c)
+def adder2bits(x, y, soma, carry):
+    carry_int = Signal(bool(0))
 
-    full = fullAdder(x[1], y[1], c, soma[1], vaiUm)
+    full1 = fullAdder(x[0], y[0], 0, soma[0], carry_int)
+    full2 = fullAdder(x[1], y[1], carry_int, soma[1], carry)
+
     return instances()
-
 
 @block
 def adder(x, y, soma, carry):
-    @always_comb
-    def comb():
-        pass
+    n = len(x)
+
+    vaium = [Signal(bool(0)) for i in range(n)]
+    faList = [None for i in range(n)]
+
+    for i in range(n):
+        faList[i] = fullAdder(x[i], y[i], vaium[i - 1], soma[i], vaium[i])
 
     return instances()
